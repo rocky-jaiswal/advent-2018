@@ -1,15 +1,8 @@
 (ns advent-2018.day1
-  (:require [advent-2018.utils :as utils])
-  (import (java.io BufferedReader StringReader)))
-
-(defn file-to-arr []
-  (line-seq 
-    (BufferedReader.
-      (StringReader.
-        (slurp "resources/day1.txt")))))
+  (:require [advent-2018.utils :as utils]))
 
 (def file-to-nums
-  (map (fn [elem] (Integer/parseInt elem)) (file-to-arr)))
+  (map (fn [elem] (Integer/parseInt elem)) (utils/file-to-arr "resources/day1.txt")))
 
 (defn solve-1 []
   (let [input file-to-nums]
