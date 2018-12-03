@@ -1,4 +1,5 @@
 const FS = require('fs');
+const _ = require('lodash');
 
 class Claim {
   constructor(id, left, top, width, height) {
@@ -8,6 +9,7 @@ class Claim {
     this.width = parseInt(width, 10);
     this.height = parseInt(height, 10);
     this.area = [];
+    this.areaAlreadybooked = false;
   }
 
   static buildClaim(line) {
@@ -46,8 +48,9 @@ class Fabric {
   }
 
   claimArea(claim) {
-    // console.log(claim.area);
-    claim.area.forEach(area => this.hash[area].push(claim.id));
+    claim.area.forEach((area) => {
+      this.hash[area].push(claim.id);
+    });
   }
 
   printOverbooked() {
@@ -57,20 +60,31 @@ class Fabric {
 
 const readContents = () => {
   const rawContents = FS.readFileSync('resources/day3.txt');
-  // console.log(rawContents.toString());
   return rawContents.toString();
 };
 
 const solve = () => {
   const contents = readContents().split('\n');
-  contents.pop();
+  contents.pop(); // because of extra last line
+
+  const fabric = new Fabric();
   const claims = contents
     .map(line => Claim.buildClaim(line))
     .map(claim => claim.markArea());
 
-  const fabric = new Fabric();
   claims.forEach(claim => fabric.claimArea(claim));
-  return fabric.printOverbooked();
+
+  // Part 1
+  console.log(fabric.printOverbooked());
+
+  // Part 2
+  return claims.find((claim) => {
+    const carea = claim.area;
+    const found = carea.map((ca) => {
+      return fabric.hash[ca].length === 1 && fabric.hash[ca][0] === claim.id;
+    });
+    return _.every(found);
+  }).id;
 };
 
 module.exports = {
