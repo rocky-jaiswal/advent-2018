@@ -1,9 +1,5 @@
 package advent2018
 
-import java.io.File
-
-fun readAllLinesFromFile(fileName: String) = File(fileName).readLines()
-
 fun insertAtRightPlace(ordered: List<String>, before: String, after: String): List<String> {
     var startPos = ordered.indexOfFirst { it == before }
     val afterPos = ordered.indexOfFirst { it == after }
