@@ -1,49 +1,77 @@
 package advent2018
 
-fun insertAtRightPlace(ordered: List<String>, before: String, after: String): List<String> {
-    var startPos = ordered.indexOfFirst { it == before }
-    val afterPos = ordered.indexOfFirst { it == after }
-    if (afterPos != -1) {
-        return insertAtRightPlace(ordered.filter { it != after }, before, after)
+class Foo() {
+    private var dependencies: MutableMap<String, List<String>> = mutableMapOf()
+    private var ordered: MutableList<Pair<String, Int>> = mutableListOf()
+
+    fun addDependency(before: String, after: String) {
+        if (dependencies.get(before) == null || dependencies.get(before)!!.isEmpty()) {
+            dependencies.put(before, listOf(after))
+        } else {
+            dependencies.put(before, dependencies.get(before)!!.plus(after))
+        }
     }
-    if (startPos == ordered.size - 1) {
-        return ordered.plus(after)
+
+    private fun findRoot(): String {
+        return dependencies.keys.find { key ->
+            !dependencies.values.flatten().contains(key)
+        }!!
     }
-    while(startPos < ordered.size - 1) {
-        startPos += 1
-        if (ordered[startPos] > after) {
-            return ordered.subList(0, startPos).plus(after).plus(ordered.subList(startPos, ordered.size))
-        } else continue
+
+    private fun findDependencies(elem: String, level: Int) {
+        if (ordered.find{elem == it.first} != null) { // it already exists and needs to move
+            ordered.removeIf { elem == it.first }
+        }
+        ordered.add(Pair(elem, level))
+        if (dependencies[elem] != null) {
+            dependencies[elem]!!.sorted().forEach { findDependencies(it, level + 1) }
+        }
     }
-    return ordered.plus(after)
+
+    private fun specialSort() {
+
+        fun lowerLevelLater(): Int? {
+            var x: Int? = null
+            ordered.forEachIndexed { idx, _ ->
+                if (idx + 1 < ordered.size && ordered[idx].second > ordered[idx+1].second && ordered[idx].first > ordered[idx+1].first) x = idx
+            }
+            return x
+        }
+
+        while (lowerLevelLater() != null) {
+            val n = lowerLevelLater()
+            val x = ordered[n!!]
+            val y = ordered[n+1]
+            ordered[n] = y
+            ordered[n+1] = x
+        }
+    }
+
+    fun solve(): String {
+        val root = findRoot()
+        findDependencies(root, 1)
+        specialSort()
+        return ordered.map{it.first}.joinToString("")
+    }
+
 }
 
-fun insertInPlace(ordered: List<String>, before: String, after: String): List<String> {
-    if (!ordered.isEmpty() && !ordered.contains(before)) {
-        println("hey this looks bad!!") // This is where our problem lies. We made a wrong assumption
-    }
-    return if (ordered.isEmpty()) {
-        ordered.plus(before).plus(after)
-    } else {
-        insertAtRightPlace(ordered, before, after)
-    }
-}
-
-fun solve(lines: List<String>): String {
+fun buildAndSolve(lines: List<String>): String {
+    val foo = Foo()
     val regex = Regex("""Step (.) must be finished before step (.) can begin.""")
-    var ordered = listOf<String>()
+
     lines.forEach { line ->
         val groupValues = regex.find(line)!!.groupValues
         val before = groupValues[1]
         val after = groupValues[2]
-        ordered = insertInPlace(ordered, before, after)
+        foo.addDependency(before, after)
     }
-    return ordered.joinToString("")
+    return foo.solve()
 }
 
 
 fun main(args: Array<String>) {
     val lines = readAllLinesFromFile("src/main/resources/day7.txt")
-    lines.forEach { println(it) }
-    println(solve(lines))
+//    lines.forEach { println(it) }
+    println(buildAndSolve(lines))
 }
